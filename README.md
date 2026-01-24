@@ -1,2 +1,19 @@
-# -Datapack-json
-將Minecraft Java版的音樂Datapack轉成json資料
+# 🛠️ Minecraft Datapack to JSON 音樂轉換工具
+
+這是一個桌面應用程式，專門用於將 Minecraft 的紅石音樂（Datapack / .mcfunction）轉換為結構化的 JSON 檔案，方便後續在 WebSocket Server 或其他專案中使用
+
+## 功能特色
+* **免安裝設計**：提供 Portable 便攜版 `.exe`，下載即用。
+* **自動換算 TPS**：支援自定義 TPS，自動計算正確的 Tick 時間軸。
+* **音高解析**：自動處理 `playsound` 指令中的 Pitch（音高），並支援自定義的音域擴充（如 `_1`, `_-1` 等）。
+* **批次處理**：選取整個資料夾即可自動轉換內部所有的 `.mcfunction` 檔案。
+
+## 如何使用
+1. **下載程式**：前往 [Releases](https://github.com/liu-ouo-tw37/-Datapack-json/releases/tag/v1.0.0) 下載最新的 `.exe` 檔案。
+2. **準備資料**：確保你的 Datapack 檔案命名為數字（例如 `0.mcfunction`, `10.mcfunction`）。
+3. **執行轉換**：
+   * 將下載下來的音樂Datapack解壓縮
+   * 開啟程式，選擇Datapack裡的 `data/(你的datapack名稱)/function/notes` 為**輸入資料夾**。
+   * 選擇轉換後的 JSON 檔案 **輸出位置**。
+   * 輸入你的歌曲 **TPS**，點擊轉換。
+4. **完成**：轉換後的 JSON 檔案會以資料夾名稱命名，並保存在你指定的位置。
