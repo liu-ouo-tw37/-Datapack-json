@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>liu_ouo_tw 音樂轉換器</title>
+  <style>
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      padding: 20px; 
+      background: #36393f;
+      color: #dcddde;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .card { 
+      background: #40444b; 
+      padding: 30px; 
+      border-radius: 12px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3); 
+      width: 400px;
+      position: relative;
+    }
+
+    h2 { 
+      margin-top: 0; 
+      color: #ffffff; 
+      font-size: 20px;
+      border-bottom: 1px solid #4f545c;
+      padding-bottom: 10px;
+    }
+
+    .info-icon {
+      position: absolute;
+      top: 25px;
+      right: 25px;
+      font-size: 18px;
+      color: #b9bbbe;
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .info-icon:hover {
+      color: #28a745;
+      transform: scale(1.1);
+    }
+
+    label {
+      display: block;
+      margin: 15px 0 5px;
+      font-size: 14px;
+      color: #8e9297;
+    }
+
+    input { 
+      background: #2f3136; 
+      color: #f6f6f7;
+      border: 1px solid #202225;
+      display: block; 
+      width: 100%; 
+      margin-bottom: 10px; 
+      padding: 12px; 
+      box-sizing: border-box; 
+      border-radius: 4px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    input:focus {
+      border-color: #28a745;
+    }
+
+    input[readonly] {
+      cursor: pointer;
+    }
+
+    button { 
+      background: #28a745; 
+      color: white; 
+      border: none; 
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      border-radius: 4px;
+      font-weight: bold;
+      cursor: pointer; 
+      transition: background 0.2s;
+    }
+
+    button:hover { 
+      background: #218838; 
+    }
+
+    /* 狀態顯示 */
+    #log { 
+      margin-top: 15px;
+      font-size: 12px; 
+      color: #28a745; 
+      text-align: center;
+      min-height: 18px;
+    }
+
+    /* 彈出說明視窗 (Modal) 樣式 */
+    .modal {
+      display: none; 
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.8);
+    }
+
+    .modal-content {
+      background-color: #2f3136;
+      margin: 10% auto;
+      padding: 25px;
+      border-radius: 8px;
+      width: 320px;
+      color: #dcddde;
+      position: relative;
+      line-height: 1.6;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    }
+
+    .close-btn {
+      color: #72767d;
+      float: right;
+      font-size: 24px;
+      font-weight: bold;
+      cursor: pointer;
+      position: absolute;
+      right: 15px;
+      top: 10px;
+    }
+
+    .close-btn:hover { color: #fff; }
+
+    ol { padding-left: 20px; font-size: 13px; }
+    hr { border: 0; border-top: 1px solid #4f545c; margin: 15px 0; }
+  </style>
+</head>
+<body>
+
+  <div class="card">
+    <span class="info-icon" onclick="toggleModal()">ⓘ</span>
+    <h2>liu_ouo_tw 音樂轉換器</h2>
+    
+    <label>原始歌曲 TPS：</label>
+    <input type="number" id="tps" placeholder="輸入音樂的 t / s" step="0.01">
+    
+    <label>選擇 notes 資料夾：</label>
+    <input type="text" id="input-path" placeholder="點擊選擇資料夾..." readonly onclick="selectDir('input')">
+    
+    <label>選擇儲存位置：</label>
+    <input type="text" id="output-path" placeholder="點擊選擇存檔位置..." readonly onclick="selectDir('output')">
+    
+    <button onclick="start()">開始轉換並儲存</button>
+    <p id="log"></p>
+  </div>
+
+  <div id="infoModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="toggleModal()">&times;</span>
+      <h3 style="color: #fff; margin-top: 0;">關於與使用說明</h3>
+      <p style="font-size: 14px;"><strong>開發者：</strong>liu_ouo_tw</p>
+      <hr>
+      <ol>
+        <li><strong>TPS：</strong>輸入原始 Datapack 的速度。程式會自動將其同步至基岩版 20 TPS。</li>
+        <li><strong>音域修正：</strong>程式會自動偵測標籤，並將音高升或降兩個八度</li>
+        <li><strong>存檔：</strong>轉換完成後會生成一個 <code>converted_music.json</code>。</li>
+      </ol>
+      <p style="text-align: center">
+        <a href="https://www.instagram.com/liu_ouo_tw/">前往liu_ouo_tw的Instagram</a>
+      </p>
+      <p style="font-size: 12px; color: #72767d; margin-top: 15px;">
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const { ipcRenderer } = require('electron');
+
+    // 開啟/關閉說明視窗
+    function toggleModal() {
+      const modal = document.getElementById('infoModal');
+      modal.style.display = (modal.style.display === "block") ? "none" : "block";
+    }
+
+    // 點擊視窗外部自動關閉
+    window.onclick = function(event) {
+      const modal = document.getElementById('infoModal');
+      if (event.target == modal) modal.style.display = "none";
+    }
+
+    // 呼叫主進程選擇資料夾
+    async function selectDir(type) {
+      const path = await ipcRenderer.invoke('select-dirs');
+      if (path) {
+        document.getElementById(type + '-path').value = path;
+      }
+    }
+
+    // 開始執行轉換
+    function start() {
+      const inputPath = document.getElementById('input-path').value;
+      const outputPath = document.getElementById('output-path').value;
+      const tps = document.getElementById('tps').value;
+
+      if (!inputPath || !outputPath || !tps) {
+        return alert('請完整填寫 TPS 與所有路徑！');
+      }
+
+      const data = { inputPath, outputPath, tps };
+      ipcRenderer.send('start-convert', data);
+      document.getElementById('log').innerText = '正在處理音軌...';
+    }
+
+    // 接收完成訊息
+    ipcRenderer.on('convert-done', (event, msg) => {
+      document.getElementById('log').innerText = '✅轉換完畢';
+      alert(msg);
+    });
+  </script>
+</body>
+</html>
